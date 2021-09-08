@@ -1,6 +1,8 @@
 PATH = '/Users/SamLy/Desktop/COMSOL API';
 FNAME = 'script_generated.mph';
 
+GEO_PIC_NAME = '/Users/SamLy/Desktop/COMSOL API/Matlab/';
+
 MIN_EPS = 0.4;
 MAX_EPS = 0.6;
 
@@ -10,9 +12,6 @@ max_r = 10;
 clearance = 0;
 l_e = 176;
 h_cell = 100;
-
-% REMOVE THIS LATER
-eps = 0.58;
 
 % Cell parameters
 l_sep = 52;
@@ -33,59 +32,61 @@ interval = 3;
 %%%%%%%%%%%
 % GENERIC %
 %%%%%%%%%%%
-% eps = zeros(5, 1);
-% for i = 1:length(eps)
-%     eps(i) = rand * (MAX_EPS - MIN_EPS) + MIN_EPS;
-% end
+eps = zeros(5, 1);
+for i = 1:length(eps)
+    eps(i) = rand * (MAX_EPS - MIN_EPS) + MIN_EPS;
+end
+
+disp(eps)
 
 % We could probably work with the same model file. Can delete the particles
-% and regenerate a set of new ones, then run geometry. Everything else
-% should be the same.
-%
-% But CHECK IT; don't assume
+% and regenerate a set of new ones, then run geometry. Everything else is 
+% the same.
 model = comsol_fns.setup_model(PATH, FNAME);
 
-[circles, model] = comsol_fns.generate_particles(model, ...
-    min_r, max_r, clearance, eps, l_e, h_cell);
+for i = 1:length(eps)
+    fprintf('Iteration: %d\n', i)
+    
+    [circles, model] = comsol_fns.generate_particles(model, ...
+        min_r, max_r, clearance, eps(i), l_e, h_cell);
+    
+    % On first pass, need to set up base model
+    if i == 1
+        % i_1C will probably not be a constant number
+        % make note to change later
+        model = comsol_fns.add_model_parameters(model, ...
+            h_cell, l_e, l_sep, C_so, C_eo, i_1c);
+        model = comsol_fns.create_geometry(model);
+        model = comsol_fns.add_model_variables(model);
+        model = comsol_fns.add_materials(model);
+        model = comsol_fns.create_mesh(model);
+        model = comsol_fns.create_voltage_probe(model);
+        model = comsol_fns.add_electrochem_pdes(model, Vo);
+        model = comsol_fns.add_electrochem_study(model, interval, duration);
+    else
+        % On n >= 2th pass, run geometry to 
+        model.component('comp1').geom('geom1').run;
+    end
+    
+    % Probably useful to calculate the porosity or void fraction, either for
+    % labelling or whatever down the road
+    porosity = Circle.porosity(circles, l_e, h_cell);
+    
+    % Calculate particle statistics here, may be useful to check later if our
+    % program is creating "unique enough" particle configurations later.
+    [mean, std] = Circle.particle_stats(circles);
+    
+    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', eps, ...
+        mean*10^6, std*10^6)
+    
+    model = comsol_fns.run_electrochem_study(model);
+    
+    % Export geometry png here
+    model = comsol_fns.export_geometry_pic(model, sprintf('%s/%d', GEO_PIC_NAME, i));
+    
+    % Try removing the particle sequence instead
+    model.geom('part1').feature.clear;
 
-% Probably useful to calculate the porosity or void fraction, either for
-% labelling or whatever down the road
-porosity = Circle.porosity(circles, l_e, h_cell);
-
-% Calculate particle statistics here, may be useful to check later if our
-% program is creating "unique enough" particle configurations later.
-[mean, std] = Circle.particle_stats(circles);
-
-model = comsol_fns.add_model_parameters(model, ...
-     h_cell, l_e, l_sep, C_so, C_eo, i_1c);
-model = comsol_fns.create_geometry(model);
-model = comsol_fns.add_model_variables(model);
-model = comsol_fns.add_materials(model);
-model = comsol_fns.create_mesh(model);
-model = comsol_fns.create_voltage_probe(model);
-model = comsol_fns.add_electrochem_pdes(model, Vo);
-model = comsol_fns.add_electrochem_study(model, interval, duration);
-model = comsol_fns.run_electrochem_study(model);
-
-% Export geometry png here
-model = comsol_fns.export_geometry_pic(model, '/Users/SamLy/Desktop/COMSOL API/Matlab/testing.png');
-
-% % Probably "easier" to entire geometry and recreate it
-% model.component('comp1').geom.remove('geom1');
-
-% Try removing the particle sequence instead
-model.geom('part1').feature.clear;
-
-% Re-generate ensemble with another porosity
-eps2 = 0.65;
-% Add particles to existing "Geometry parts"
-[circles, model] = comsol_fns.generate_particles(model, ...
-    min_r, max_r, clearance, eps2, l_e, h_cell);
-porosity = Circle.porosity(circles, l_e, h_cell);
-[mean, std] = Circle.particle_stats(circles);
-
-model.component('comp1').geom('geom1').run;
-
-model = comsol_fns.run_electrochem_study(model);
+end
 
 disp('break here');
