@@ -1,6 +1,3 @@
-% import com.comsol.model.*
-% import com.comsol.model.util.*
-
 PATH = '/Users/SamLy/Desktop/COMSOL API';
 FNAME = 'script_generated.mph';
 
