@@ -1,0 +1,7 @@
+*.png
+*.docx
+ref*
+Ref*
+
+# Ignore these COMSOL generated scripts
+*.m~*
