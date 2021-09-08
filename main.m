@@ -30,9 +30,9 @@ Vo = 4.29;
 duration = 30; 
 interval = 2;
 
-%%%%%%%%%%%%%
-%% GENERIC %%
-%%%%%%%%%%%%%
+%%%%%%%%%%%
+% GENERIC %
+%%%%%%%%%%%
 % eps = zeros(5, 1);
 % for i = 1:length(eps)
 %     eps(i) = rand * (MAX_EPS - MIN_EPS) + MIN_EPS;
@@ -85,7 +85,7 @@ model.geom('part1').feature.clear;
 % Re-generate ensemble with another porosity
 eps2 = 0.65;
 % Add particles to existing "Geometry parts"
-[circles, model] = comsol_fns.add_particles(model, ...
+[circles, model] = comsol_fns.generate_particles(model, ...
     min_r, max_r, clearance, eps2, l_e, h_cell);
 porosity = Circle.porosity(circles, l_e, h_cell);
 [mean, std] = Circle.particle_stats(circles);

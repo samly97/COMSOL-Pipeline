@@ -4,6 +4,10 @@ classdef comsol_fns
             import com.comsol.model.*
             import com.comsol.model.util.*
             
+            global PARTICLE_TAG
+            
+            PARTICLE_TAG = 'part1';
+            
             % Create COMSOL file and name it
             model = ModelUtil.create('Model');
             model.modelPath(path);
@@ -13,6 +17,10 @@ classdef comsol_fns
             model.component('comp1').geom.create('geom1', 2);
             model.result.table.create('tbl1', 'Table');
             model.component('comp1').mesh.create('mesh1');
+            
+            % Create "housing" for importing particles
+            model.geom.create(PARTICLE_TAG, 'Part', 2);
+            model.geom(PARTICLE_TAG).label('Particles');
         end
         
         function [circles, model] = generate_particles(model, ...
@@ -34,43 +42,7 @@ classdef comsol_fns
             % distribution statistics for post-processing.
             % model: the COMSOL model being created.
             
-            PARTICLE_TAG = 'part1';
-            
-            % Create "housing" for importing particles
-            model.geom.create(PARTICLE_TAG, 'Part', 2);
-            model.geom(PARTICLE_TAG).label('Particles');
-            
-            circles = RSA(min_r, max_r, clearance, eps, l_e, h_cell);
-            for i = 1:length(circles)
-                circle = circles(i);
-                idx = "c" + num2str(i);
-                model.geom(PARTICLE_TAG).create(idx, 'Circle');
-                model.geom(PARTICLE_TAG).feature(idx).set('pos', [circle.x circle.y]);
-                model.geom(PARTICLE_TAG).feature(idx).set('r', circle.R);
-            end
-            model.geom(PARTICLE_TAG).run;
-        end
-        
-                function [circles, model] = add_particles(model, ...
-                min_r, max_r, clearance, eps, l_e, h_cell)
-            % generate_particle fills a rectangular region (l_e, h_cell)
-            % with random (uniformly) generated spheres between min_r and
-            % max_r. Option to add "clearance" between particles.
-            %
-            % Inputs:
-            % min_r: minimum particle radius (um)
-            % max_r: maximum particle radius (um)
-            % clearance: spacing between particles (um)
-            % eps: desired electrode porosity
-            % l_e: length of electrode (um)
-            % h_cell: height of electrode (um)
-            %
-            % Returns
-            % circles: array of "Circle" objects, mostly for particle
-            % distribution statistics for post-processing.
-            % model: the COMSOL model being created.
-            
-            PARTICLE_TAG = 'part1';
+            global PARTICLE_TAG
             
             circles = RSA(min_r, max_r, clearance, eps, l_e, h_cell);
             for i = 1:length(circles)
