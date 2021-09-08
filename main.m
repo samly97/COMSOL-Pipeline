@@ -27,8 +27,8 @@ i_1c = 10; % not real number - replace later
 Vo = 4.29; 
 
 % Time: Discharge study settings
-duration = 30; 
-interval = 2;
+duration = 15; 
+interval = 3;
 
 %%%%%%%%%%%
 % GENERIC %
@@ -65,16 +65,10 @@ model = comsol_fns.create_mesh(model);
 model = comsol_fns.create_voltage_probe(model);
 model = comsol_fns.add_electrochem_pdes(model, Vo);
 model = comsol_fns.add_electrochem_study(model, interval, duration);
-
+model = comsol_fns.run_electrochem_study(model);
 
 % Export geometry png here
-model.result.export.create('img1', 'Image');
-model.result.export('img1').set('imagetype', 'png');
-model.result.export('img1').set('sourcetype', 'geometry');
-model.result.export('img1').set('sourceobject', 'geom1');
-model.result.export('img1').set('pngfilename', '/Users/SamLy/Desktop/COMSOL API/Matlab/testing.png');
-model.result.export('img1').run();
-model.result.export().remove('img1');
+model = comsol_fns.export_geometry_pic(model, '/Users/SamLy/Desktop/COMSOL API/Matlab/testing.png');
 
 % % Probably "easier" to entire geometry and recreate it
 % model.component('comp1').geom.remove('geom1');

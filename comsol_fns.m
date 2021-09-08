@@ -649,8 +649,6 @@ classdef comsol_fns
             
             model = comsol_fns.h_more_solver_settings(model, ...
                 discharge_time_data);
-            
-            model = comsol_fns.run_electrochem_study(model);
         end
         
         function model = h_add_studies(model)
@@ -761,6 +759,21 @@ classdef comsol_fns
         
         function model = run_electrochem_study(model)
             model.sol('sol1').runAll;
+        end
+        
+        function model = export_geometry_pic(model, filepath)
+        % export_geometry_pic exports the picture of the cell and then
+        % removes the image from the "Results > Export" nodes in COMSOL.
+        %
+        % model: comsol.model object
+        % filepath: where to save the exported image
+        model.result.export.create('img1', 'Image');
+        model.result.export('img1').set('imagetype', 'png');
+        model.result.export('img1').set('sourcetype', 'geometry');
+        model.result.export('img1').set('sourceobject', 'geom1');
+        model.result.export('img1').set('pngfilename', filepath);
+        model.result.export('img1').run();
+        model.result.export().remove('img1');
         end
     end
 end
