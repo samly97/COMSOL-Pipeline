@@ -768,6 +768,7 @@ classdef comsol_fns
         % model: comsol.model object
         % filepath: where to save the exported image
         model.result.export.create('img1', 'Image');
+        model.result.export('img1').set('zoomextents', 'on');
         model.result.export('img1').set('imagetype', 'png');
         model.result.export('img1').set('sourcetype', 'geometry');
         model.result.export('img1').set('sourceobject', 'geom1');

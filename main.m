@@ -47,6 +47,8 @@ model = comsol_fns.setup_model(PATH, FNAME);
 for i = 1:length(eps)
     fprintf('Iteration: %d\n', i)
     
+    fprintf('Target porosity: %.2f\n', eps(i));
+    
     [circles, model] = comsol_fns.generate_particles(model, ...
         min_r, max_r, clearance, eps(i), l_e, h_cell);
     
