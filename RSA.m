@@ -28,7 +28,7 @@ function circle_arr = RSA(min_r, max_r, clearance, eps, l_e, h_cell)
     
     MAX_ITERS = 10000;
     i = 1;
-    
+   
     % Arbitrary tolerance, so when porosity is within "x = 0.02", the we
     % stop attempting this algorithm
     while abs(1 - (1 - vol_frac)/eps) > 0.02 && i < MAX_ITERS
@@ -41,19 +41,12 @@ function circle_arr = RSA(min_r, max_r, clearance, eps, l_e, h_cell)
         % Check overlap before inserting!
         new_circle = Circle(x, y, R);
         
-        % First circle; nothing to compare to
-        if isempty(circle_arr)
-            circle_arr = [circle_arr new_circle];
-            vol_frac = vol_frac + new_circle.Area()/cell_area;
-            continue;
-        end
-        
         % If at any point overlaps, need to get new values, otherwise
         % insert into array
         temp_circle = Circle(x, y, R + clearance);
         overlaps = false;
-        for i = 1:length(circle_arr)
-            to_compare = circle_arr(i);
+        for j = 1:length(circle_arr)
+            to_compare = circle_arr(j);
             if temp_circle.Overlaps(to_compare)
                 overlaps = true;
                 break;
