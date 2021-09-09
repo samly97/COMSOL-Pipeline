@@ -3,5 +3,8 @@
 ref*
 Ref*
 
-# Ignore these COMSOL generated scripts
+# Ignore these MATLAB generated artifacts
 *.m~*
+
+# Ignore MacOS generated artifacts
+.DS_STORE
