@@ -32,7 +32,7 @@ interval = 3;
 %%%%%%%%%%%
 % GENERIC %
 %%%%%%%%%%%
-eps = zeros(5, 1);
+eps = zeros(10, 1);
 for i = 1:length(eps)
     eps(i) = rand * (MAX_EPS - MIN_EPS) + MIN_EPS;
 end
@@ -63,8 +63,12 @@ for i = 1:length(eps)
         model = comsol_fns.add_materials(model);
         model = comsol_fns.create_mesh(model);
         model = comsol_fns.create_voltage_probe(model);
+        
         model = comsol_fns.add_electrochem_pdes(model, Vo);
+        model = comsol_fns.add_dilute_transport(model);
+        
         model = comsol_fns.add_electrochem_study(model, interval, duration);
+        model = comsol_fns.add_tortuosity_study(model);
     else
         % On n >= 2th pass, run geometry to 
         model.component('comp1').geom('geom1').run;
@@ -82,13 +86,20 @@ for i = 1:length(eps)
         mean*10^6, std*10^6)
     
     model = comsol_fns.run_electrochem_study(model);
+    model = comsol_fns.run_tortuosity_study(model);
     
     % Export geometry png here
-    model = comsol_fns.export_geometry_pic(model, sprintf('%s/%d', GEO_PIC_NAME, i));
+    model = comsol_fns.export_geometry_pic(model, ...
+        sprintf('%s/results/microstructure%d', GEO_PIC_NAME, i));
     
+    % Get derived value
+    [flux, model] = comsol_fns.flux_for_tortuosity(model);
+    tortuosity = porosity * C_eo/(l_e * 10^-6 * flux);
+    
+    fprintf('tortuosity %.2f\n', tortuosity)
+
     % Try removing the particle sequence instead
     model.geom('part1').feature.clear;
-
 end
 
 disp('break here');

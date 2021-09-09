@@ -655,8 +655,10 @@ classdef comsol_fns
             model.study.create('std1');
             model.study('std1').create('stat', 'Stationary');
             model.study('std1').create('time', 'Transient');
-            model.study('std1').feature('stat').set('activate', {'C_e' 'off' 'C_s' 'off' 'phi_l' 'on' 'phi_s' 'on' 'ev' 'off'  ...
-                'frame:spatial1' 'on' 'frame:material1' 'on'});
+            model.study('std1').feature('stat').set('activate', {'C_e' 'off' ...
+                'C_s' 'off' 'phi_l' 'on' 'phi_s' 'on' 'ev' 'off'  ...
+                'tds' 'off' 'frame:spatial1' 'on' 'frame:material1' 'on'});
+            model.study('std1').feature('time').activate('tds', false);
         end
         
         function model = h_def_solver_settings(model)
@@ -775,6 +777,66 @@ classdef comsol_fns
         model.result.export('img1').set('pngfilename', filepath);
         model.result.export('img1').run();
         model.result.export().remove('img1');
+        end
+        
+        function model = add_dilute_transport(model)
+            % h_add_dilute_transport adds the "Transport of Dilute Species"
+            % interface to "component 1". Changes the diffusion coefficient
+            % to 1, adds the initial and boundary conditions.
+            model.component('comp1').physics.create('tds', 'DilutedSpecies', {'c'});
+            model.component('comp1').physics('tds').selection.named('geom1_comsel2');
+            model.component('comp1').physics('tds').label('Tortuosity Measurement');
+            model.component('comp1').physics('tds').prop('TransportMechanism').set('Convection', false);
+            
+            model.component('comp1').physics('tds').feature('cdm1').set('D_c', {'1[m^2/s]' '0' '0' '0' '1[m^2/s]' '0' '0' '0' '1[m^2/s]'});
+            model.component('comp1').physics('tds').create('conc1', 'Concentration', 1);
+            model.component('comp1').physics('tds').create('conc2', 'Concentration', 1);
+            model.component('comp1').physics('tds').feature('conc1').label('Concentration - Inlet');
+            model.component('comp1').physics('tds').feature('conc1').selection.set([7]);
+            model.component('comp1').physics('tds').feature('conc2').label('Concentration - Outlet');
+            model.component('comp1').physics('tds').feature('conc2').selection.named('geom1_boxsel3');
+            model.component('comp1').physics('tds').feature('conc1').setIndex('species', true, 0);
+            model.component('comp1').physics('tds').feature('conc1').setIndex('c0', 'Ce_0', 0);
+            model.component('comp1').physics('tds').feature('conc2').setIndex('species', true, 0);
+        end
+        
+        function model = add_tortuosity_study(model)
+            model.study.create('std2');
+            model.study('std2').label('Study 2 - Tortuosity');
+            
+            model.study('std2').create('stat', 'Stationary');
+            model.study('std2').feature('stat').set('activate', {'C_e' 'off' ...
+                'C_s' 'off' 'phi_l' 'off' 'phi_s' 'off' 'ev' 'off'  ...
+                'tds' 'on' 'frame:spatial1' 'on' 'frame:material1' 'on'});
+            
+            model.sol.create('sol3');
+            model.sol('sol3').study('std2');
+        end
+        
+        function model = run_tortuosity_study(model)
+            model.study("std2").run();
+        end
+        
+        function [flux, model] = flux_for_tortuosity(model)
+            model.result.numerical.create('av1', 'AvLine');
+            model.result.numerical('av1').set('intsurface', true);
+            model.result.numerical('av1').set('data', 'dset2');
+            model.result.numerical('av1').selection.named('geom1_boxsel3');
+            model.result.numerical('av1').label('Tortuosity Measurement - Flux');
+            model.result.numerical('av1').set('expr', {'tds.tflux_cx'});
+            model.result.numerical('av1').set('descr', {'Total flux, x component'});
+            model.result.numerical('av1').set('unit', {'mol/(m^2*s)'});
+            model.result.table.create('tbl2', 'Table');
+            model.result.table('tbl2').comments('Tortuosity Measurement - Flux {av1}');
+            model.result.numerical('av1').set('table', 'tbl2');
+            model.result.numerical('av1').setResult;
+            
+            flux = str2double(model.result.table('tbl2').getTableData(false));
+            
+            % Remove table and line average integral
+            model.result.table.remove('tbl2');
+            model.result().numerical.remove('av1');
+
         end
     end
 end
