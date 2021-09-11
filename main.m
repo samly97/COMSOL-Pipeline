@@ -82,7 +82,7 @@ for i = 1:length(eps)
     % program is creating "unique enough" particle configurations later.
     [mean, std] = Circle.particle_stats(circles);
     
-    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', eps, ...
+    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', eps(i), ...
         mean*10^6, std*10^6)
     
     model = comsol_fns.run_electrochem_study(model);
