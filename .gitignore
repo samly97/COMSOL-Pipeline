@@ -8,3 +8,6 @@ Ref*
 
 # Ignore MacOS generated artifacts
 .DS_STORE
+
+# Ignore generated JSON files
+*.json

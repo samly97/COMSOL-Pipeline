@@ -1,10 +1,13 @@
 PATH = '/Users/SamLy/Desktop/COMSOL API';
 FNAME = 'script_generated.mph';
 
-GEO_PIC_NAME = '/Users/SamLy/Desktop/COMSOL API/Matlab/';
+RESULTS_PATH = '/Users/SamLy/Desktop/COMSOL API/Matlab/';
 
 MIN_EPS = 0.4;
 MAX_EPS = 0.6;
+
+% Number of microstructures to generate
+NUM_GEN = 3;
 
 % Generate NMC particles to these specs;
 min_r = 1;
@@ -29,10 +32,13 @@ Vo = 4.29;
 duration = 15; 
 interval = 3;
 
+% Pre-assign space for Microstructure. To encode into JSON
+structures_to_encode = cell(NUM_GEN, 1);
+
 %%%%%%%%%%%
 % GENERIC %
 %%%%%%%%%%%
-eps = zeros(10, 1);
+eps = zeros(NUM_GEN, 1);
 for i = 1:length(eps)
     eps(i) = rand * (MAX_EPS - MIN_EPS) + MIN_EPS;
 end
@@ -46,7 +52,6 @@ model = comsol_fns.setup_model(PATH, FNAME);
 
 for i = 1:length(eps)
     fprintf('Iteration: %d\n', i)
-    
     fprintf('Target porosity: %.2f\n', eps(i));
     
     [circles, model] = comsol_fns.generate_particles(model, ...
@@ -82,7 +87,7 @@ for i = 1:length(eps)
     % program is creating "unique enough" particle configurations later.
     [mean, std] = Circle.particle_stats(circles);
     
-    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', eps(i), ...
+    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', porosity, ...
         mean*10^6, std*10^6)
     
     model = comsol_fns.run_electrochem_study(model);
@@ -90,7 +95,7 @@ for i = 1:length(eps)
     
     % Export geometry png here
     model = comsol_fns.export_geometry_pic(model, ...
-        sprintf('%s/results/microstructure%d', GEO_PIC_NAME, i));
+        sprintf('%s/results/microstructure%d', RESULTS_PATH, i));
     
     % Get derived value
     [flux, model] = comsol_fns.flux_for_tortuosity(model);
@@ -100,6 +105,18 @@ for i = 1:length(eps)
 
     % Try removing the particle sequence instead
     model.geom('part1').feature.clear;
+    
+    % Add Microstructure to data array for encoding
+    structures_to_encode{i} = Microstructure(i, porosity, ...
+        tortuosity, circles);
 end
+
+% Encode to JSON here
+json = jsonencode(structures_to_encode);
+
+% Save JSON data to results
+fid = fopen(sprintf('%s/results/metadata.json', RESULTS_PATH),'w');
+fprintf(fid,'%s\n', json);
+fclose(fid);
 
 disp('break here');
