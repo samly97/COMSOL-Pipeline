@@ -7,7 +7,7 @@ MIN_EPS = 0.4;
 MAX_EPS = 0.6;
 
 % Number of microstructures to generate
-NUM_GEN = 3;
+NUM_GEN = 2;
 
 % Generate NMC particles to these specs;
 min_r = 1;
@@ -29,8 +29,8 @@ i_1c = 10; % not real number - replace later
 Vo = 4.29; 
 
 % Time: Discharge study settings
-duration = 15; 
-interval = 3;
+duration = 30; 
+interval = 6;
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
@@ -93,16 +93,19 @@ for i = 1:length(eps)
     model = comsol_fns.run_electrochem_study(model);
     model = comsol_fns.run_tortuosity_study(model);
     
-    % Export geometry png here
-    model = comsol_fns.export_geometry_pic(model, ...
-        sprintf('%s/results/microstructure%d', RESULTS_PATH, i));
-    
     % Get derived value
     [flux, model] = comsol_fns.flux_for_tortuosity(model);
     tortuosity = porosity * C_eo/(l_e * 10^-6 * flux);
     
     fprintf('tortuosity %.2f\n', tortuosity)
 
+    % Export geometry png here
+    model = comsol_fns.export_geometry_pic(model, ...
+        sprintf('%s/results/microstructure%d', RESULTS_PATH, i));
+    
+    % Export electrochemical data here
+    model = comsol_fns.export_electrochem_data(model, i, RESULTS_PATH);
+    
     % Try removing the particle sequence instead
     model.geom('part1').feature.clear;
     

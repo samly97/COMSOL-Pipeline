@@ -838,5 +838,31 @@ classdef comsol_fns
             model.result().numerical.remove('av1');
 
         end
+        
+        function model = export_electrochem_data(model, num, rootpath)
+            % export_electrochem_data saves the electrochemical (cell)
+            % operation data for microstructure (num) and saves it to a
+            % specified filepath as a CSV file.
+            %
+            % model: COMSOL model
+            % num: the microstructure created at "num" iteration
+            % rootpath: root of where to save the created CSV file. For
+            % instance, "/ROOT/results/%d/electro.csv".
+            model.result.export.create('data1', 'Data');
+            model.result.export('data1').set('expr', {});
+            model.result.export('data1').set('descr', {});
+            
+            % Specify State-of-Lithiation here
+            model.result.export('data1').setIndex('expr', 'C_s/Cs_max * 100', 0);
+            model.result.export('data1').setIndex('descr', 'State of Lithiation', 0);
+            
+            % Make directory if not exist, otherwise, save data
+            mkdir(sprintf('%s/results/%d', rootpath, num));
+            model.result.export('data1').set('filename', ...
+                sprintf('%s/results/%d/electro.csv', rootpath, num));
+            
+            model.result.export('data1').run;
+            model.result.export.remove('data1');
+        end
     end
 end

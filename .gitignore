@@ -11,3 +11,6 @@ Ref*
 
 # Ignore generated JSON files
 *.json
+
+# Ignore generated CSV files
+*.csv
