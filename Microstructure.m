@@ -12,12 +12,12 @@ classdef Microstructure
             % format to retrieve metadata. It also contains utility
             % function(s) to assist with modeling work.
             obj.id = id;
-            obj.porosity = num2str(porosity, 3);
-            obj.tortuosity = num2str(tortuosity, 3);
-            obj.circles = Microstructure.Circles_to_Str(circles);
+            obj.porosity = porosity;
+            obj.tortuosity = tortuosity;
+            obj.circles = circles;
         end
         
-        function i_1c = Find_i_1C(self, Cs_max, h_cell, circles)
+        function i_1c = Find_i_1C(self, Cs_max, h_cell)
             % Find_i_1C is a utility function that determines the current
             % density (A/m^2), or 1C-rate, which would theoretically
             % discharge the cell in an hour.
@@ -29,7 +29,6 @@ classdef Microstructure
             %
             % Cs_max: maximum lithium concentration in molecule (mol/m^3)
             % h_cell: the width of the current collector (um)
-            % circles: array of RSA generated circles in the microstructure
             %
             % Returns:
             % i_1c: 1C-rate normalized by the current collector (A/m^2)
@@ -37,7 +36,7 @@ classdef Microstructure
             F = 96485; % Faraday's constant C/mol
             
             % Summation of all the circles' areas.
-            area_arr = arrayfun(@(circle) circle.Area(), circles);
+            area_arr = arrayfun(@(circle) circle.Area(), self.circles);
             area = sum(area_arr);
             
             h_cell = h_cell * 10^-6;
@@ -47,7 +46,13 @@ classdef Microstructure
         end
         
         function obj = Ready_for_JSON(self)
-            % Ready_for_JSON ... do this later.
+            % Ready_for_JSON converts the numerical data in self.circles to
+            % strings. At this point, the Microstructure class is being
+            % encoded into JSON.
+            self.porosity = num2str(self.porosity, 3);
+            self.tortuosity = num2str(self.tortuosity, 3);
+            self.circles = Microstructure.Circles_to_Str(self.circles);
+            obj = self;
         end
     end
     methods(Static)

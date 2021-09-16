@@ -7,7 +7,7 @@ MIN_EPS = 0.4;
 MAX_EPS = 0.6;
 
 % Number of microstructures to generate
-NUM_GEN = 2;
+NUM_GEN = 1;
 
 % Max lithium concentration in NMC particle
 Cs_max = 48900; % mol/m^3
@@ -31,8 +31,8 @@ C_eo = 1000;
 Vo = 4.29; 
 
 % Time: Discharge study settings
-duration = 3600; 
-interval = 300;
+duration = 30; 
+interval = 3;
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
@@ -59,11 +59,22 @@ for i = 1:length(eps)
     [circles, model] = comsol_fns.generate_particles(model, ...
         min_r, max_r, clearance, eps(i), l_e, h_cell);
     
+    % Probably useful to calculate the porosity or void fraction, either for
+    % labelling or whatever down the road
+    porosity = Circle.porosity(circles, l_e, h_cell);
+    
+    % Calculate particle statistics here, may be useful to check later if our
+    % program is creating "unique enough" particle configurations later.
+    [mean, std] = Circle.particle_stats(circles);
+    
+    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', porosity, ...
+        mean*10^6, std*10^6)
+    
     % Calculate 1C-rate
-    microstructure = Microstructure(i, 0.55, 0, circles); % will have to update
-    % the porosity and tortuosity after the fact
-    fprintf('From microstructure: %f\n', microstructure.Find_i_1C(Cs_max, ...
-        h_cell, circles));
+    microstructure = Microstructure(i, porosity, 0, circles); % update 
+    % tortuosity after
+    i_1c = microstructure.Find_i_1C(Cs_max, h_cell) / 10;
+    fprintf('From microstructure: %f\n', i_1c);
     
     % On first pass, need to set up base model
     if i == 1
@@ -87,17 +98,6 @@ for i = 1:length(eps)
         model.component('comp1').geom('geom1').run;
     end
     
-    % Probably useful to calculate the porosity or void fraction, either for
-    % labelling or whatever down the road
-    porosity = Circle.porosity(circles, l_e, h_cell);
-    
-    % Calculate particle statistics here, may be useful to check later if our
-    % program is creating "unique enough" particle configurations later.
-    [mean, std] = Circle.particle_stats(circles);
-    
-    fprintf('porosity: %.2f, mean rad (um): %.2f, std (um): %.2f\n', porosity, ...
-        mean*10^6, std*10^6)
-    
     model = comsol_fns.run_electrochem_study(model);
     model = comsol_fns.run_tortuosity_study(model);
     
@@ -117,9 +117,11 @@ for i = 1:length(eps)
     % Try removing the particle sequence instead
     model.geom('part1').feature.clear;
     
+    % Update microstructure's tortuosity before encoding to JSON
+    microstructure.tortuosity = tortuosity;
+    
     % Add Microstructure to data array for encoding
-    structures_to_encode{i} = Microstructure(i, porosity, ...
-        tortuosity, circles);
+    structures_to_encode{i} = microstructure.Ready_for_JSON();
 end
 
 % Encode to JSON here
