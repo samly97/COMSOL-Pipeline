@@ -7,7 +7,7 @@ MIN_EPS = 0.4;
 MAX_EPS = 0.6;
 
 % Number of microstructures to generate
-NUM_GEN = 1;
+NUM_GEN = 5;
 
 % Max lithium concentration in NMC particle
 Cs_max = 48900; % mol/m^3
@@ -30,9 +30,8 @@ C_eo = 1000;
 % - Charge: over Equilibrium potential
 Vo = 4.29; 
 
-% Time: Discharge study settings
-duration = 30; 
-interval = 3;
+% Studied C-rates
+C_rates = [1/3, 1, 2];
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
@@ -73,7 +72,7 @@ for i = 1:length(eps)
     % Calculate 1C-rate
     microstructure = Microstructure(i, porosity, 0, circles); % update 
     % tortuosity after
-    i_1c = microstructure.Find_i_1C(Cs_max, h_cell) / 10;
+    i_1c = microstructure.Find_i_1C(Cs_max, h_cell);
     fprintf('From microstructure: %f\n', i_1c);
     
     % On first pass, need to set up base model
@@ -91,14 +90,29 @@ for i = 1:length(eps)
         model = comsol_fns.add_electrochem_pdes(model, Vo);
         model = comsol_fns.add_dilute_transport(model);
         
-        model = comsol_fns.add_electrochem_study(model, interval, duration);
+        model = comsol_fns.add_electrochem_study(model);
         model = comsol_fns.add_tortuosity_study(model);
     else
         % On n >= 2th pass, run geometry to 
         model.component('comp1').geom('geom1').run;
     end
     
-    model = comsol_fns.run_electrochem_study(model);
+    % For a microstructure, discharge the cell at different C-rates
+    for k = 1:length(C_rates)
+        C = C_rates(k);
+        
+        duration = 3600 / C;
+        interval = duration / 12;
+        
+        model = comsol_fns.modify_applied_current(model, i_1c, C);
+        model = comsol_fns.setup_electrochem_study_duration(model, ...
+            interval, duration);
+        model = comsol_fns.run_electrochem_study(model);
+        
+        % Export electrochemical data here
+        model = comsol_fns.export_electrochem_data(model, i, C, RESULTS_PATH);
+    end
+    
     model = comsol_fns.run_tortuosity_study(model);
     
     % Get derived value
@@ -110,9 +124,6 @@ for i = 1:length(eps)
     % Export geometry png here
     model = comsol_fns.export_geometry_pic(model, ...
         sprintf('%s/results/microstructure%d', RESULTS_PATH, i));
-    
-    % Export electrochemical data here
-    model = comsol_fns.export_electrochem_data(model, i, RESULTS_PATH);
     
     % Try removing the particle sequence instead
     model.geom('part1').feature.clear;

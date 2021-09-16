@@ -108,6 +108,19 @@ classdef comsol_fns
             model.param('par4').label('Operational Parameters');
         end
         
+        function model = modify_applied_current(model, i_1c, C)
+            % modify_applied_current changes the "i_app" parameter in the
+            % "General Parameters" node. This variable is the "top-level"
+            % variable, so the experiment will follow this value.
+            %
+            % model: the COMSOL model object
+            % i_1c: the 1C current density for the microstructure (A/m^2)
+            % C: discharged C rate (1)
+            
+            i_app = sprintf('%f [A/m^2]', i_1c * C);
+            model.param('par4').set('i_app', i_app);
+        end
+        
         function model = create_geometry(model)
             % Import particles
             model.component('comp1').geom('geom1').create('pi1', 'PartInstance');
@@ -630,16 +643,21 @@ classdef comsol_fns
             model.component('comp1').physics('ev').feature('is1').set('dimInit', 0);
         end
         
-        function model = add_electrochem_study(model, step, stop) 
+        function model = add_electrochem_study(model) 
         % Adds a stationary and time-dependent study to the COMSOL model to
         % simulate heterogeneous study of Lithium-ion battery operation in
         % 2D.
-        %
-        % step: time-step intervals to get data for (s)
-        % stop: how long to run the study for (s)
             model = comsol_fns.h_add_studies(model);
             model = comsol_fns.h_def_solver_settings(model);
             model = comsol_fns.h_probe_results_settings(model);
+        end
+        
+        function model = setup_electrochem_study_duration(model, step, stop)
+            % Specifies the interval of data collection and stop time for
+            % the electrochemical study.
+            
+            % step: time-step intervals to get data for (s)
+            % stop: how long to run the study for (s)
             
             % Study discharge from 0 - 'stop' with 'step' as the interval
             % of data collection
@@ -839,13 +857,14 @@ classdef comsol_fns
 
         end
         
-        function model = export_electrochem_data(model, num, rootpath)
+        function model = export_electrochem_data(model, num, C, rootpath)
             % export_electrochem_data saves the electrochemical (cell)
             % operation data for microstructure (num) and saves it to a
             % specified filepath as a CSV file.
             %
             % model: COMSOL model
             % num: the microstructure created at "num" iteration
+            % C: the C-rate the cell was discharged at
             % rootpath: root of where to save the created CSV file. For
             % instance, "/ROOT/results/%d/electro.csv".
             model.result.export.create('data1', 'Data');
@@ -859,7 +878,8 @@ classdef comsol_fns
             % Make directory if not exist, otherwise, save data
             mkdir(sprintf('%s/results/%d', rootpath, num));
             model.result.export('data1').set('filename', ...
-                sprintf('%s/results/%d/electro.csv', rootpath, num));
+                sprintf('%s/results/%d/electro_%f.csv', ...
+                rootpath, num2str(C, 2), num));
             
             model.result.export('data1').run;
             model.result.export.remove('data1');
