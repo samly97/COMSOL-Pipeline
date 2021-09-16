@@ -6,6 +6,9 @@ Ref*
 # Ignore these MATLAB generated artifacts
 *.m~*
 
+# Ignore COMSOL files
+*.mph*
+
 # Ignore MacOS generated artifacts
 .DS_STORE
 

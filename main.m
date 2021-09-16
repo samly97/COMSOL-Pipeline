@@ -9,6 +9,11 @@ MAX_EPS = 0.6;
 % Number of microstructures to generate
 NUM_GEN = 2;
 
+F = 96485; % Faraday's Constant C/mol
+
+% Max lithium concentration in NMC particle
+Cs_max = 48900; % mol/m^3
+
 % Generate NMC particles to these specs;
 min_r = 1;
 max_r = 10;
@@ -20,7 +25,6 @@ h_cell = 100;
 l_sep = 52;
 C_so = 980;
 C_eo = 1000;
-i_1c = 10; % not real number - replace later
 
 % Initial voltage - sort of important!
 % Guess (for positive electrode):
@@ -29,8 +33,8 @@ i_1c = 10; % not real number - replace later
 Vo = 4.29; 
 
 % Time: Discharge study settings
-duration = 30; 
-interval = 6;
+duration = 3600; 
+interval = 300;
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
@@ -56,6 +60,18 @@ for i = 1:length(eps)
     
     [circles, model] = comsol_fns.generate_particles(model, ...
         min_r, max_r, clearance, eps(i), l_e, h_cell);
+    
+    % Calculate 1C-rate
+    perim = 0;
+    area = 0;
+    for j = 1:length(circles)
+        perim = perim + 2 * pi * circles(j).R;
+        area = area + circles(j).Area();
+    end
+    capacity = F * Cs_max * area/ (h_cell * 10^-6) / 3600 ;% A h/m^2
+    i_1c = capacity;
+    
+    disp(i_1c)
     
     % On first pass, need to set up base model
     if i == 1
