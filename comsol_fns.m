@@ -72,7 +72,7 @@ classdef comsol_fns
             
             % Electrolyte params
             model.param.group.create('par2');
-            model.param('par2').set('De', '7.5e-11[m^2/s]', 'Salt diffusivity in electrolyte');
+            model.param('par2').set('De', '7.5e-11 * 10 [m^2/s]', 'Salt diffusivity in electrolyte');
             model.param('par2').set('tp', '0.363', 'Lithium ion transference number');
             model.param('par2').set('dlnfdlnc', '0');
             model.param('par2').set('Ce_0', sprintf('%d [mol/m^3]', C_eo), ...
