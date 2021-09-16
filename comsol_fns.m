@@ -358,18 +358,18 @@ classdef comsol_fns
         end
         
         function model = create_mesh(model)
-            model.component('comp1').mesh('mesh1').create('ftri1', 'FreeTri');
             model.component('comp1').mesh('mesh1').create('ftri2', 'FreeTri');
-            model.component('comp1').mesh('mesh1').create('ftri3', 'FreeTri');
-            model.component('comp1').mesh('mesh1').feature('ftri1').selection.named('geom1_comsel2');
-            model.component('comp1').mesh('mesh1').feature('ftri1').create('size1', 'Size');
-            model.component('comp1').mesh('mesh1').feature('ftri2').selection.named('geom1_uni1_dom');
+            model.component('comp1').mesh('mesh1').create('ftri1', 'FreeTri');
+            model.component('comp1').mesh('mesh1').create('bl1', 'BndLayer');
+            model.component('comp1').mesh('mesh1').feature('ftri2').selection.named('geom1_comsel2');
             model.component('comp1').mesh('mesh1').feature('ftri2').create('size1', 'Size');
-            model.component('comp1').mesh('mesh1').feature('ftri3').create('size1', 'Size');
+            model.component('comp1').mesh('mesh1').feature('bl1').selection.named('geom1_uni1_dom');
+            model.component('comp1').mesh('mesh1').feature('bl1').create('blp', 'BndLayerProp');
+            model.component('comp1').mesh('mesh1').feature('bl1').feature('blp').selection.named('geom1_intsel1');
             
-            model.component('comp1').mesh('mesh1').feature('ftri1').feature('size1').set('hauto', 9);
-            model.component('comp1').mesh('mesh1').feature('ftri2').feature('size1').set('hauto', 6);
-            model.component('comp1').mesh('mesh1').feature('ftri3').feature('size1').set('hauto', 6);
+            model.component('comp1').mesh('mesh1').feature('size').set('hauto', 6);
+            model.component('comp1').mesh('mesh1').feature('ftri2').feature('size1').set('hauto', 9);
+            model.component('comp1').mesh('mesh1').feature('bl1').feature('blp').set('blnlayers', 3);
             model.component('comp1').mesh('mesh1').run;
         end
         
