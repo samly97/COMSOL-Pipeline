@@ -1,7 +1,7 @@
 PATH = '/Users/SamLy/Desktop/COMSOL API';
 FNAME = 'script_generated.mph';
 
-RESULTS_PATH = '/Users/SamLy/Desktop/COMSOL API/Matlab/';
+RESULTS_PATH = '/Users/SamLy/Desktop/COMSOL API/Matlab';
 
 MIN_EPS = 0.4;
 MAX_EPS = 0.6;

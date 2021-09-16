@@ -878,8 +878,8 @@ classdef comsol_fns
             % Make directory if not exist, otherwise, save data
             mkdir(sprintf('%s/results/%d', rootpath, num));
             model.result.export('data1').set('filename', ...
-                sprintf('%s/results/%d/electro_%f.csv', ...
-                rootpath, num2str(C, 2), num));
+                sprintf('%s/results/%d/electro_%s.csv', ...
+                rootpath, num, num2str(C, 2)));
             
             model.result.export('data1').run;
             model.result.export.remove('data1');
