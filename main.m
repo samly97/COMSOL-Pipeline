@@ -9,8 +9,6 @@ MAX_EPS = 0.6;
 % Number of microstructures to generate
 NUM_GEN = 2;
 
-F = 96485; % Faraday's Constant C/mol
-
 % Max lithium concentration in NMC particle
 Cs_max = 48900; % mol/m^3
 
@@ -62,16 +60,10 @@ for i = 1:length(eps)
         min_r, max_r, clearance, eps(i), l_e, h_cell);
     
     % Calculate 1C-rate
-    perim = 0;
-    area = 0;
-    for j = 1:length(circles)
-        perim = perim + 2 * pi * circles(j).R;
-        area = area + circles(j).Area();
-    end
-    capacity = F * Cs_max * area/ (h_cell * 10^-6) / 3600 ;% A h/m^2
-    i_1c = capacity;
-    
-    disp(i_1c)
+    microstructure = Microstructure(i, 0.55, 0, circles); % will have to update
+    % the porosity and tortuosity after the fact
+    fprintf('From microstructure: %f\n', microstructure.Find_i_1C(Cs_max, ...
+        h_cell, circles));
     
     % On first pass, need to set up base model
     if i == 1
