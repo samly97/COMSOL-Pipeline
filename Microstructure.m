@@ -49,8 +49,8 @@ classdef Microstructure
             % Ready_for_JSON converts the numerical data in self.circles to
             % strings. At this point, the Microstructure class is being
             % encoded into JSON.
-            self.porosity = num2str(self.porosity, 3);
-            self.tortuosity = num2str(self.tortuosity, 3);
+            self.porosity = num2str(self.porosity);
+            self.tortuosity = num2str(self.tortuosity);
             self.circles = Microstructure.Circles_to_Str(self.circles);
             obj = self;
         end
@@ -64,9 +64,9 @@ classdef Microstructure
             % circles: array of Circle objects which make up the
             % Microstructure.
             for c = 1:length(circles)
-                circles(c).x = num2str(circles(c).x * 10^6, 3);
-                circles(c).y = num2str(circles(c).y * 10^6, 3);
-                circles(c).R = num2str(circles(c).R * 10^6, 3);
+                circles(c).x = num2str(circles(c).x * 10^6);
+                circles(c).y = num2str(circles(c).y * 10^6);
+                circles(c).R = num2str(circles(c).R * 10^6);
             end
         end
     end
