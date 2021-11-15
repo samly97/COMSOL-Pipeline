@@ -17,3 +17,7 @@ Ref*
 
 # Ignore generated CSV files
 *.csv
+
+# Ignore Jupyter Notebook
+Old Jupyter Notebooks/*
+.ipynb_checkpoints/
