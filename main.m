@@ -15,7 +15,7 @@ Cs_max = 48900; % mol/m^3
 % Generate NMC particles to these specs;
 min_r = 1;
 max_r = 10;
-clearance = 0;
+clearance = 0.2;
 l_e = 176;
 h_cell = 100;
 
@@ -31,7 +31,7 @@ C_eo = 1000;
 Vo = 4.29; 
 
 % Studied C-rates
-C_rates = [1/3, 1, 2];
+C_rates = [1/3, 1, 2, 4, 6, 9];
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
@@ -119,7 +119,7 @@ for i = 1:length(eps)
     [flux, model] = comsol_fns.flux_for_tortuosity(model);
     tortuosity = porosity * C_eo/(l_e * 10^-6 * flux);
     
-    fprintf('tortuosity %.2f\n', tortuosity)
+     fprintf('tortuosity %.2f\n', tortuosity)
 
     % Export geometry png here
     model = comsol_fns.export_geometry_pic(model, ...
