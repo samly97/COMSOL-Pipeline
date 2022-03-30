@@ -1,17 +1,19 @@
 classdef Microstructure
     properties
         id % label/iteration the microstructure was created at
+        length % in micrometers
         porosity 
         tortuosity % calculated continuum tortuosity
         circles % array of RSA generated circles in the microstructure
     end
     methods
         function obj = Microstructure(id, ...
-                porosity, tortuosity, circles)
+                length, porosity, tortuosity, circles)
             % The Microstructure class is intented to be encoded into JSON
             % format to retrieve metadata. It also contains utility
             % function(s) to assist with modeling work.
             obj.id = id;
+            obj.length = length;
             obj.porosity = porosity;
             obj.tortuosity = tortuosity;
             obj.circles = circles;
@@ -49,6 +51,7 @@ classdef Microstructure
             % Ready_for_JSON converts the numerical data in self.circles to
             % strings. At this point, the Microstructure class is being
             % encoded into JSON.
+            self.length = num2str(self.length);
             self.porosity = num2str(self.porosity);
             self.tortuosity = num2str(self.tortuosity);
             self.circles = Microstructure.Circles_to_Str(self.circles);

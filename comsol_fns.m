@@ -55,6 +55,11 @@ classdef comsol_fns
             model.geom(PARTICLE_TAG).run;
         end
         
+        function model = modify_modify_L_pos(model, l_e)
+            model.param('default2').set('L_pos', sprintf('%d [um]', l_e), ...
+                'Positive electrode thickness');
+        end
+        
         function model = add_model_parameters(model, h_cell, l_e, l_sep,...
                 C_so, C_eo, i_1c)
             % Separator params

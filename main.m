@@ -1,10 +1,10 @@
 PATH = '/Users/SamLy/Desktop/COMSOL API';
 FNAME = 'script_generated.mph';
 
-RESULTS_PATH = '/Users/SamLy/Desktop/COMSOL API/Matlab';
+RESULTS_PATH = '/Users/SamLy/Desktop/COMSOL-Pipeline/Matlab';
 
-MIN_EPS = 0.4;
-MAX_EPS = 0.6;
+MIN_EPS = 0.35;
+MAX_EPS = 0.48;
 
 % Number of microstructures to generate
 NUM_GEN = 5;
@@ -16,11 +16,11 @@ Cs_max = 48900; % mol/m^3
 min_r = 1;
 max_r = 10;
 clearance = 0.2;
-l_e = 176;
+l_e = [77, 101, 176];
 h_cell = 100;
 
 % Cell parameters
-l_sep = 52;
+l_sep = 20;
 C_so = 980;
 C_eo = 1000;
 
@@ -31,10 +31,14 @@ C_eo = 1000;
 Vo = 4.29; 
 
 % Studied C-rates
-C_rates = [1/3, 1, 2, 4, 6, 9];
+C_rates = [1/4, 1/2, 1, 2, 3];
 
 % Pre-assign space for Microstructure. To encode into JSON
 structures_to_encode = cell(NUM_GEN, 1);
+
+% Randomly pick length of electrode to study
+l_e_arr = randi([1 length(l_e)], 1, NUM_GEN);
+l_e_arr = l_e(l_e_arr);
 
 %%%%%%%%%%%
 % GENERIC %
@@ -56,11 +60,11 @@ for i = 1:length(eps)
     fprintf('Target porosity: %.2f\n', eps(i));
     
     [circles, model] = comsol_fns.generate_particles(model, ...
-        min_r, max_r, clearance, eps(i), l_e, h_cell);
+        min_r, max_r, clearance, eps(i), l_e_arr(i), h_cell);
     
     % Probably useful to calculate the porosity or void fraction, either for
     % labelling or whatever down the road
-    porosity = Circle.porosity(circles, l_e, h_cell);
+    porosity = Circle.porosity(circles, l_e_arr(i), h_cell);
     
     % Calculate particle statistics here, may be useful to check later if our
     % program is creating "unique enough" particle configurations later.
@@ -70,30 +74,30 @@ for i = 1:length(eps)
         mean*10^6, std*10^6)
     
     % Calculate 1C-rate
-    microstructure = Microstructure(i, porosity, 0, circles); % update 
+    microstructure = Microstructure(i, l_e_arr(i), porosity, 0, circles); % update 
     % tortuosity after
     i_1c = microstructure.Find_i_1C(Cs_max, h_cell);
     fprintf('From microstructure: %f\n', i_1c);
     
-    % On first pass, need to set up base model
+    % Set up model parameters, material properties, PDEs, and create mesh
+    % i_1C will probably not be a constant number
+    % make note to change later
     if i == 1
-        % i_1C will probably not be a constant number
-        % make note to change later
         model = comsol_fns.add_model_parameters(model, ...
-            h_cell, l_e, l_sep, C_so, C_eo, i_1c);
+            h_cell, l_e_arr(i), l_sep, C_so, C_eo, i_1c);
         model = comsol_fns.create_geometry(model);
         model = comsol_fns.add_model_variables(model);
         model = comsol_fns.add_materials(model);
         model = comsol_fns.create_mesh(model);
         model = comsol_fns.create_voltage_probe(model);
-        
+
         model = comsol_fns.add_electrochem_pdes(model, Vo);
         model = comsol_fns.add_dilute_transport(model);
-        
+
         model = comsol_fns.add_electrochem_study(model);
         model = comsol_fns.add_tortuosity_study(model);
     else
-        % On n >= 2th pass, run geometry to 
+        model = comsol_fns.modify_modify_L_pos(model, l_e_arr(i));
         model.component('comp1').geom('geom1').run;
     end
     
@@ -117,7 +121,7 @@ for i = 1:length(eps)
     
     % Get derived value
     [flux, model] = comsol_fns.flux_for_tortuosity(model);
-    tortuosity = porosity * C_eo/(l_e * 10^-6 * flux);
+    tortuosity = porosity * C_eo/(l_e_arr(i) * 10^-6 * flux);
     
      fprintf('tortuosity %.2f\n', tortuosity)
 
